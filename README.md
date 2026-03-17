@@ -16,6 +16,8 @@ python3 convert_1920s_to_1960s.py config_1920s.txt config_1960s.txt --report rep
 
 ### Parámetros
 
+Se utiliza automáticamente la plantilla base `template_1960s_base.cfg` (si existe en el mismo directorio del script).
+
 - `input`: archivo de configuración de origen.
 - `output`: archivo convertido.
 - `--target-slot`: slot destino para interfaces al convertir `x/0/y` a `x/<slot>/y` (por defecto `1`).
