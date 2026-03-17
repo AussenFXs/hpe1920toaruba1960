@@ -13,6 +13,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
+DEFAULT_TEMPLATE_PATH = Path("template_1960s_base.cfg")
+
+
 @dataclass
 class ConversionResult:
     output_lines: list[str]
@@ -23,8 +26,9 @@ class ConversionResult:
 
 
 class ConfigConverter:
-    def __init__(self, target_slot: int = 1) -> None:
+    def __init__(self, target_slot: int = 1, template_lines: list[str] | None = None) -> None:
         self.target_slot = target_slot
+        self.template_lines = template_lines or []
 
         self.omit_patterns = [
             re.compile(r"^\s*undo\b", re.IGNORECASE),
@@ -53,6 +57,10 @@ class ConfigConverter:
         output: list[str] = []
         converted = omitted = untouched = 0
         warnings: list[str] = []
+
+        output.extend(self.template_lines)
+        if self.template_lines:
+            output.append("")
 
         output.append("! ---------------------------------------------------------------------")
         output.append("! Archivo generado automáticamente por convert_1920s_to_1960s.py")
@@ -142,6 +150,10 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def load_template(template_path: Path) -> list[str]:
+    return template_path.read_text(encoding="utf-8", errors="ignore").splitlines()
+
+
 def write_report(path: Path, result: ConversionResult) -> None:
     lines = [
         "Reporte de conversión 1920S -> 1960",
@@ -163,7 +175,17 @@ def main() -> None:
     args = parse_args()
 
     source_text = args.input.read_text(encoding="utf-8", errors="ignore")
-    converter = ConfigConverter(target_slot=args.target_slot)
+
+    template_lines: list[str] = []
+    if DEFAULT_TEMPLATE_PATH.exists():
+        template_lines = load_template(DEFAULT_TEMPLATE_PATH)
+    else:
+        print(
+            f"ADVERTENCIA: no se encontró la plantilla '{DEFAULT_TEMPLATE_PATH}', "
+            "se continúa sin plantilla."
+        )
+
+    converter = ConfigConverter(target_slot=args.target_slot, template_lines=template_lines)
     result = converter.convert(source_text)
 
     args.output.write_text("\n".join(result.output_lines) + "\n", encoding="utf-8")
